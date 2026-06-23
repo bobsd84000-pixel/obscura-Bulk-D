@@ -1,7 +1,4 @@
 {
-  "buildCommand": "cd apps/landing && npm install && npm run build",
-  "outputDirectory": "apps/landing/build",
-  "env": {
-    "NODE_ENV": "production"
-  }
+  "buildCommand": "npm install --prefix apps/landing && npm run build --prefix apps/landing",
+  "outputDirectory": "apps/landing/build"
 }
