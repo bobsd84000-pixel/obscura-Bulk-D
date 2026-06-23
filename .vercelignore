@@ -1,0 +1,10 @@
+# Ignore everything except apps/landing
+crates/
+docs/
+skills/
+assets/
+Cargo.*
+README.md
+LICENSE
+.github/
+*.sh
