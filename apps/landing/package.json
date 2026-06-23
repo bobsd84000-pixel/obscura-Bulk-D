@@ -1,0 +1,23 @@
+{
+  "name": "obscura-landing",
+  "version": "1.0.0",
+  "description": "Landing page commerciale pour Obscura",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.263.1"
+  },
+  "scripts": {
+    "dev": "react-scripts start",
+    "build": "react-scripts build",
+    "deploy": "netlify deploy --prod --dir=build"
+  },
+  "eslintConfig": {
+    "extends": ["react-app"]
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version"]
+  }
+}

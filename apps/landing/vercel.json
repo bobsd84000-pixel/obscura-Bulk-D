@@ -1,0 +1,15 @@
+{
+  "name": "obscura-landing",
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "regions": ["cdg1", "iad1", "sfo1"],
+  "functions": {
+    "api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  }
+}
