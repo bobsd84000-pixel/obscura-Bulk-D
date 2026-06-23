@@ -1,4 +1,4 @@
 {
-  "buildCommand": "npm install --prefix apps/landing && npm run build --prefix apps/landing",
-  "outputDirectory": "apps/landing/build"
+  "buildCommand": "echo 'Static site'",
+  "outputDirectory": "apps/landing"
 }
