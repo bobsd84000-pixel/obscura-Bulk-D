@@ -153,9 +153,9 @@
     .features {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 32px;
-      padding: 80px 60px;
-      max-width: 1400px;
+      gap: 24px;
+      padding: 60px 20px;
+      max-width: 1200px;
       margin: 0 auto;
     }
 
@@ -193,7 +193,7 @@
 
     .pricing-section {
       background: linear-gradient(180deg, rgba(0,50,100,0.2) 0%, rgba(10,10,10,0) 100%);
-      padding: 80px 60px;
+      padding: 60px 20px;
       border-top: 1px solid rgba(0,217,255,0.1);
     }
 
@@ -207,17 +207,18 @@
 
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 32px;
-      max-width: 1200px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      max-width: 1000px;
       margin: 0 auto;
+      padding: 0 20px;
     }
 
     .pricing-card {
       background: rgba(255,255,255,0.02);
       border: 1px solid rgba(0,217,255,0.15);
       border-radius: 12px;
-      padding: 40px;
+      padding: 28px 20px;
       backdrop-filter: blur(10px);
       position: relative;
       transition: all 0.3s ease;
@@ -226,7 +227,7 @@
     .pricing-card.featured {
       border-color: rgba(0,217,255,0.6);
       background: linear-gradient(135deg, rgba(0,217,255,0.1), rgba(96,165,250,0.05));
-      transform: scale(1.05);
+      transform: scale(1.02);
     }
 
     .pricing-badge {
@@ -248,7 +249,7 @@
     }
 
     .pricing-price {
-      font-size: 48px;
+      font-size: 40px;
       font-weight: 800;
       color: #00d9ff;
       margin-bottom: 8px;
@@ -290,12 +291,16 @@
     }
 
     @media (max-width: 768px) {
-      h1 { font-size: 48px; }
+      h1 { font-size: 42px; }
       nav { padding: 16px 20px; }
-      .features, .pricing-section { padding: 40px 20px; }
+      .hero { padding: 60px 20px; }
+      .features { padding: 40px 20px; gap: 16px; }
+      .pricing-section { padding: 40px 20px; }
+      .section-title { font-size: 32px; }
       .cta-group { flex-direction: column; }
-      .btn { width: 100%; justify-content: center; }
+      .btn { width: 100%; justify-content: center; font-size: 13px; }
       .pricing-card.featured { transform: scale(1); }
+      .pricing-grid { gap: 16px; }
     }
   </style>
 </head>
