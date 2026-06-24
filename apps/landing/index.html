@@ -3,349 +3,314 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Obscura - Web Scraping Intelligence</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <title>Obscura — Headless Browser, Rust.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    html, body { 
-      height: 100%;
-      width: 100%;
-    }
-
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      color: #fff;
-      overflow-x: hidden;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
       line-height: 1.6;
     }
 
-    /* Navigation */
     nav {
+      padding: 24px 64px;
+      border-bottom: 1px solid #1a1a1a;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 60px;
-      backdrop-filter: blur(20px);
-      background: rgba(15, 12, 41, 0.7);
-      border-bottom: 1px solid rgba(100, 200, 255, 0.2);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
     }
 
     .logo {
-      font-size: 26px;
-      font-weight: 900;
-      letter-spacing: 3px;
-      background: linear-gradient(135deg, #64c8ff, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-family: 'Space Mono', monospace;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #00d9ff;
     }
 
-    nav a { color: #64c8ff; text-decoration: none; font-weight: 600; font-size: 13px; }
+    nav a {
+      color: #888;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+    }
 
-    /* Hero Section */
+    /* Hero */
     .hero {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 100px 40px;
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(180deg, rgba(100, 200, 255, 0.1) 0%, transparent 50%);
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
-      animation: float 20s infinite ease-in-out;
-    }
-
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: -30%;
-      left: -20%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(100, 200, 255, 0.2) 0%, transparent 70%);
-      animation: float 25s infinite ease-in-out reverse;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(30px); }
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 10;
-      max-width: 800px;
-      text-align: center;
-      animation: fadeInUp 1s ease;
-    }
-
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(100, 200, 255, 0.1);
-      border: 1px solid rgba(100, 200, 255, 0.3);
-      border-radius: 50px;
-      padding: 8px 16px;
-      margin-bottom: 40px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #64c8ff;
-      backdrop-filter: blur(10px);
+      padding: 100px 64px;
+      max-width: 900px;
+      margin: 0 auto;
     }
 
     h1 {
-      font-size: 80px;
-      font-weight: 900;
+      font-family: 'Space Mono', monospace;
+      font-size: 64px;
+      font-weight: 700;
       line-height: 1.1;
-      margin-bottom: 24px;
-      letter-spacing: -2px;
-      background: linear-gradient(135deg, #fff 0%, #64c8ff 50%, #8b5cf6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin-bottom: 32px;
+      color: #fff;
+      letter-spacing: -1px;
     }
 
     .hero-desc {
-      font-size: 20px;
-      color: #aaa;
-      margin-bottom: 50px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+      font-size: 18px;
+      color: #999;
+      margin-bottom: 48px;
+      max-width: 700px;
+      line-height: 1.7;
     }
 
-    .hero-cta {
+    .cta {
       display: flex;
-      gap: 16px;
-      justify-content: center;
-      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 80px;
     }
 
     .btn {
-      padding: 15px 40px;
-      border: none;
-      border-radius: 12px;
-      font-weight: 700;
+      padding: 12px 24px;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      background: none;
+      color: #e0e0e0;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: 500;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      border-color: #00d9ff;
+      color: #00d9ff;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #64c8ff, #8b5cf6);
-      color: #0f0c29;
-      font-weight: 700;
+      background: #00d9ff;
+      color: #0a0a0a;
+      border-color: #00d9ff;
     }
 
     .btn-primary:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(100, 200, 255, 0.4);
+      background: #00a8cc;
+      border-color: #00a8cc;
     }
 
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-      border: 2px solid rgba(100, 200, 255, 0.5);
-      backdrop-filter: blur(10px);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(100, 200, 255, 0.15);
-      border-color: #64c8ff;
-      transform: translateY(-4px);
-    }
-
-    /* Features Grid */
-    .features {
-      max-width: 1200px;
-      margin: 120px auto;
-      padding: 0 40px;
+    /* Specs Section */
+    .specs {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 32px;
+      padding: 80px 64px;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+      background: rgba(0, 217, 255, 0.02);
     }
 
-    .feature {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(100, 200, 255, 0.2);
-      border-radius: 16px;
-      padding: 40px;
-      backdrop-filter: blur(20px);
-      transition: all 0.3s ease;
+    .spec {
+      text-align: center;
     }
 
-    .feature:hover {
-      transform: translateY(-8px);
-      border-color: rgba(100, 200, 255, 0.5);
-      background: rgba(100, 200, 255, 0.05);
-      box-shadow: 0 20px 40px rgba(100, 200, 255, 0.1);
-    }
-
-    .feature-icon {
-      font-size: 48px;
-      margin-bottom: 20px;
-    }
-
-    .feature h3 {
-      font-size: 18px;
+    .spec-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 32px;
       font-weight: 700;
-      margin-bottom: 12px;
+      color: #00d9ff;
+      margin-bottom: 8px;
     }
 
-    .feature p {
+    .spec-label {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Comparison */
+    .comparison {
+      padding: 80px 64px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .comparison h2 {
+      font-family: 'Space Mono', monospace;
+      font-size: 24px;
+      margin-bottom: 40px;
+      color: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #1a1a1a;
       font-size: 13px;
+    }
+
+    th {
+      color: #666;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    td {
       color: #999;
+    }
+
+    tr:hover {
+      background: rgba(0, 217, 255, 0.03);
+    }
+
+    .check {
+      color: #00d9ff;
+      font-weight: 700;
+    }
+
+    /* Features */
+    .features {
+      padding: 80px 64px;
+      background: rgba(0, 217, 255, 0.01);
+      border-top: 1px solid #1a1a1a;
+    }
+
+    .features h2 {
+      font-family: 'Space Mono', monospace;
+      font-size: 24px;
+      margin-bottom: 48px;
+      color: #fff;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 48px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .feature-item {
+      border-left: 2px solid #00d9ff;
+      padding-left: 24px;
+    }
+
+    .feature-item h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .feature-item p {
+      font-size: 13px;
+      color: #888;
     }
 
     /* Pricing */
     .pricing {
-      background: linear-gradient(180deg, rgba(100, 200, 255, 0.1) 0%, transparent 100%);
-      padding: 120px 40px;
-      border-top: 1px solid rgba(100, 200, 255, 0.2);
-      border-bottom: 1px solid rgba(100, 200, 255, 0.2);
+      padding: 80px 64px;
+      border-top: 1px solid #1a1a1a;
     }
 
     .pricing h2 {
-      font-size: 56px;
-      font-weight: 900;
-      text-align: center;
-      margin-bottom: 80px;
-      background: linear-gradient(135deg, #fff, #64c8ff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-family: 'Space Mono', monospace;
+      font-size: 24px;
+      margin-bottom: 48px;
+      color: #fff;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .pricing-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 28px;
-      max-width: 1100px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 900px;
       margin: 0 auto;
     }
 
     .price-card {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(100, 200, 255, 0.05));
-      border: 1px solid rgba(100, 200, 255, 0.2);
-      border-radius: 16px;
-      padding: 40px 32px;
-      backdrop-filter: blur(20px);
-      position: relative;
-      transition: all 0.3s ease;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      padding: 32px;
+      background: rgba(255,255,255,0.01);
     }
 
     .price-card.featured {
-      border: 2px solid rgba(100, 200, 255, 0.8);
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(100, 200, 255, 0.05));
-      transform: scale(1.05);
-      box-shadow: 0 30px 60px rgba(100, 200, 255, 0.2);
-    }
-
-    .price-badge {
-      position: absolute;
-      top: -12px;
-      left: 24px;
-      background: linear-gradient(135deg, #64c8ff, #8b5cf6);
-      color: #0f0c29;
-      padding: 5px 14px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 800;
+      border: 1px solid #00d9ff;
+      background: rgba(0, 217, 255, 0.05);
     }
 
     .price-card h3 {
-      font-size: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .price {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
       font-weight: 700;
-      margin-top: 16px;
-      margin-bottom: 12px;
-    }
-
-    .price-amount {
-      font-size: 44px;
-      font-weight: 900;
-      color: #64c8ff;
-      margin-bottom: 6px;
-    }
-
-    .price-period {
-      font-size: 13px;
-      color: #888;
-      margin-bottom: 32px;
+      color: #00d9ff;
+      margin-bottom: 24px;
     }
 
     .price-card ul {
       list-style: none;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
 
     .price-card li {
-      font-size: 13px;
-      color: #aaa;
-      padding: 10px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .price-card li::before {
-      content: "✓";
-      color: #64c8ff;
-      font-weight: bold;
-      font-size: 16px;
+      font-size: 12px;
+      color: #888;
+      padding: 8px 0;
+      border-bottom: 1px solid #1a1a1a;
     }
 
     .price-card .btn {
       width: 100%;
       justify-content: center;
+      margin-top: 24px;
     }
 
-    /* Footer */
     footer {
+      padding: 40px 64px;
+      border-top: 1px solid #1a1a1a;
       text-align: center;
-      padding: 60px 40px;
-      border-top: 1px solid rgba(100, 200, 255, 0.1);
-      color: #666;
       font-size: 12px;
+      color: #666;
     }
 
-    footer a { color: #64c8ff; text-decoration: none; }
+    footer a {
+      color: #00d9ff;
+      text-decoration: none;
+    }
 
-    /* Mobile */
     @media (max-width: 768px) {
-      h1 { font-size: 48px; }
-      nav { padding: 16px 20px; }
-      .hero { padding: 60px 20px; }
-      .features { padding: 0 20px; margin: 80px auto; gap: 20px; }
-      .pricing { padding: 80px 20px; }
-      .pricing h2 { font-size: 36px; }
-      .price-card.featured { transform: scale(1); }
-      .btn { width: 100%; justify-content: center; }
+      h1 { font-size: 40px; }
+      nav, .hero, .specs, .comparison, .features, .pricing, footer { padding-left: 20px; padding-right: 20px; }
+      .specs, .feature-grid, .pricing-cards { grid-template-columns: 1fr; gap: 24px; }
+      .spec { text-align: left; }
     }
   </style>
 </head>
@@ -356,105 +321,145 @@
   </nav>
 
   <section class="hero">
-    <div class="hero-content">
-      <div class="hero-badge">
-        🚀 Web Scraping Intelligence Platform
-      </div>
-      <h1>Scraper Web<br>Ultra-Performant</h1>
-      <p class="hero-desc">Chrome headless en Rust. 30MB RAM. 14ms latence. Anti-bot 99.4%. Intégré Claude.</p>
-      
-      <div class="hero-cta">
-        <a href="https://github.com/h4ckf0r0day/obscura/releases/latest" class="btn btn-primary">
-          📥 Télécharger (Gratuit)
-        </a>
-        <a href="https://github.com/h4ckf0r0day/obscura" class="btn btn-secondary">
-          📖 Documentation
-        </a>
-      </div>
+    <h1>Headless browser.<br>Rust. Fast.</h1>
+    <p class="hero-desc">Chrome DevTools Protocol in pure Rust. 30MB memory footprint. Stealth mode built-in. Scrape Reddit, Cloudflare, Discord without detection.</p>
+    <div class="cta">
+      <a href="https://github.com/h4ckf0r0day/obscura/releases/latest" class="btn btn-primary">Download</a>
+      <a href="https://github.com/h4ckf0r0day/obscura" class="btn">GitHub</a>
     </div>
   </section>
 
+  <section class="specs">
+    <div class="spec">
+      <div class="spec-value">30MB</div>
+      <div class="spec-label">Memory</div>
+    </div>
+    <div class="spec">
+      <div class="spec-value">14ms</div>
+      <div class="spec-label">CDP Latency</div>
+    </div>
+    <div class="spec">
+      <div class="spec-value">99.4%</div>
+      <div class="spec-label">Stealth</div>
+    </div>
+    <div class="spec">
+      <div class="spec-value">1 line</div>
+      <div class="spec-label">CLI</div>
+    </div>
+  </section>
+
+  <section class="comparison">
+    <h2>vs Puppeteer</h2>
+    <table>
+      <tr>
+        <th>Feature</th>
+        <th>Obscura</th>
+        <th>Puppeteer</th>
+      </tr>
+      <tr>
+        <td>Memory</td>
+        <td><span class="check">✓ 30MB</span></td>
+        <td>500MB+</td>
+      </tr>
+      <tr>
+        <td>Language</td>
+        <td><span class="check">✓ Rust (fast)</span></td>
+        <td>Node.js</td>
+      </tr>
+      <tr>
+        <td>Anti-bot</td>
+        <td><span class="check">✓ 99.4%</span></td>
+        <td>Partial</td>
+      </tr>
+      <tr>
+        <td>Chrome DevTools</td>
+        <td><span class="check">✓ Native</span></td>
+        <td>✓ Yes</td>
+      </tr>
+      <tr>
+        <td>CLI</td>
+        <td><span class="check">✓ Direct</span></td>
+        <td>Requires setup</td>
+      </tr>
+      <tr>
+        <td>License</td>
+        <td><span class="check">✓ MIT</span></td>
+        <td>✓ Apache 2.0</td>
+      </tr>
+    </table>
+  </section>
+
   <section class="features">
-    <div class="feature">
-      <div class="feature-icon">⚡</div>
-      <h3>Ultra Léger</h3>
-      <p>30MB RAM vs 500MB+ Puppeteer. Scalable sans limite.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🕵️</div>
-      <h3>Anti-Bot 99.4%</h3>
-      <p>Reddit, Cloudflare, Discord. Détection impossible.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">⚙️</div>
-      <h3>Facile</h3>
-      <p>CLI 1 ligne. Compatible Puppeteer/Playwright.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🔧</div>
-      <h3>14ms Latence</h3>
-      <p>Chrome DevTools Protocol natif. Zéro délai.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🔐</div>
-      <h3>Open Source</h3>
-      <p>MIT License. Code ouvert. Auditable.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📡</div>
-      <h3>MCP Ready</h3>
-      <p>Intégration Claude native. Model Context Protocol.</p>
+    <h2>Built for developers</h2>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <h3>⚡ Ultra-Light</h3>
+        <p>30MB baseline. Scales horizontally without bloat. Run thousands in parallel.</p>
+      </div>
+      <div class="feature-item">
+        <h3>🕵️ Stealth Native</h3>
+        <p>Anti-detection for Reddit, Cloudflare, Discord built-in. No plugins.</p>
+      </div>
+      <div class="feature-item">
+        <h3>🔧 Drop-in</h3>
+        <p>Puppeteer-compatible API. Switch libraries with one line.</p>
+      </div>
+      <div class="feature-item">
+        <h3>📡 MCP Ready</h3>
+        <p>Model Context Protocol. Works with Claude and other AI platforms.</p>
+      </div>
+      <div class="feature-item">
+        <h3>🔐 Open Source</h3>
+        <p>MIT license. Full source. No black boxes. Audit everything.</p>
+      </div>
+      <div class="feature-item">
+        <h3>⚙️ Developer First</h3>
+        <p>One-line CLI. Direct Chrome DevTools. Zero boilerplate.</p>
+      </div>
     </div>
   </section>
 
   <section class="pricing">
-    <h2>Pricing Simple & Transparent</h2>
-    
+    <h2>Pricing</h2>
     <div class="pricing-cards">
       <div class="price-card">
         <h3>Community</h3>
-        <div class="price-amount">0€</div>
-        <div class="price-period">À jamais</div>
+        <div class="price">0€</div>
         <ul>
-          <li>Gratuit pour toujours</li>
-          <li>Support GitHub</li>
-          <li>Self-hosted</li>
-          <li>Source complet</li>
+          <li>✓ Free forever</li>
+          <li>✓ Full source</li>
+          <li>✓ Self-hosted</li>
+          <li>✓ GitHub support</li>
         </ul>
-        <a href="https://github.com/h4ckf0r0day/obscura" class="btn btn-secondary">Démarrer</a>
+        <a href="https://github.com/h4ckf0r0day/obscura" class="btn">Get Started</a>
       </div>
-
       <div class="price-card featured">
-        <div class="price-badge">POPULAIRE</div>
         <h3>Pro</h3>
-        <div class="price-amount">99€</div>
-        <div class="price-period">/mois</div>
+        <div class="price">99€</div>
         <ul>
-          <li>Support prioritaire</li>
-          <li>CLI + API</li>
-          <li>MCP Claude</li>
-          <li>SLA 99%</li>
+          <li>✓ Priority support</li>
+          <li>✓ CLI + API</li>
+          <li>✓ MCP integration</li>
+          <li>✓ SLA 99%</li>
         </ul>
-        <button class="btn btn-primary">Démarrer</button>
+        <button class="btn btn-primary">Subscribe</button>
       </div>
-
       <div class="price-card">
         <h3>Enterprise</h3>
-        <div class="price-amount">Custom</div>
-        <div class="price-period">Contact</div>
+        <div class="price">Custom</div>
         <ul>
-          <li>White-label</li>
-          <li>Infra privée</li>
-          <li>Support dédié</li>
-          <li>Contrat SLA</li>
+          <li>✓ White-label</li>
+          <li>✓ Private infra</li>
+          <li>✓ Dedicated support</li>
+          <li>✓ Custom SLA</li>
         </ul>
-        <button class="btn btn-secondary">Contact Sales</button>
+        <a href="#" class="btn">Contact</a>
       </div>
     </div>
   </section>
 
   <footer>
-    © 2026 Obscura • <a href="https://github.com/h4ckf0r0day/obscura">GitHub</a> • <a href="https://github.com/h4ckf0r0day/obscura#readme">Docs</a>
+    © 2026 Obscura • <a href="https://github.com/h4ckf0r0day/obscura">GitHub</a> • <a href="https://github.com/h4ckf0r0day/obscura#readme">Docs</a> • <a href="https://github.com/h4ckf0r0day/obscura/issues">Issues</a>
   </footer>
 </body>
 </html>
