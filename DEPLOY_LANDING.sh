@@ -14,7 +14,7 @@ if [ -z "$(git config user.email)" ]; then
 fi
 
 # 2. Vérifier que nous sommes dans le repo obscura
-if [ ! -f "Cargo.toml" ]; then
+if [ ! -f "apps/landing/index.html" ]; then
   echo "❌ Erreur: lance ce script depuis la racine du repo Obscura"
   exit 1
 fi
