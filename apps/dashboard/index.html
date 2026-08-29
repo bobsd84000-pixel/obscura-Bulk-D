@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OBSCURA Dashboard</title>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+    }
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      border-bottom: 1px solid #222;
+    }
+    nav .title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #00d9ff;
+    }
+    nav button {
+      background: #00d9ff;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 12px;
+    }
+    .tab-btn {
+      background: transparent;
+      color: #666;
+      border: none;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      font-family: inherit;
+    }
+    .tab-btn.active {
+      background: #00d9ff20;
+      color: #00d9ff;
+    }
+    h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .jobs-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .job-card {
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .job-card.running {
+      border-color: #ffa50055;
+    }
+    .job-card.completed {
+      border-color: #00d9ff55;
+    }
+    .job-url {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .job-meta {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .status-badge {
+      font-weight: bold;
+      font-size: 11px;
+    }
+    .status-running {
+      color: #ffa500;
+    }
+    .status-completed {
+      color: #00d9ff;
+    }
+    .status-queued {
+      color: #666;
+    }
+    .progress-bar {
+      background: #0a0a0a;
+      height: 4px;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: currentColor;
+      transition: width 0.3s ease;
+    }
+    .job-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      font-family: inherit;
+    }
+    .btn-download {
+      background: #00d9ff;
+      color: #000;
+    }
+    .btn-delete {
+      background: #ff4444;
+      color: #fff;
+    }
+    .create-form {
+      max-width: 600px;
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .form-input {
+      width: 100%;
+      background: #0a0a0a;
+      border: 1px solid #333;
+      color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    .checkbox-group {
+      margin-bottom: 8px;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-launch {
+      width: 100%;
+      background: #00d9ff;
+      color: #000;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .result-card {
+      background: #0a0a0a;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 12px;
+    }
+    .result-url {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .result-count {
+      font-size: 18px;
+      font-weight: bold;
+      color: #00d9ff;
+    }
+    .total-scraped {
+      color: #888;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function Dashboard() {
+      const [jobs, setJobs] = useState([
+        { id: 1, url: 'https://reddit.com/r/entrepreneur', status: 'completed', results: 487, date: '2min ago', startedAt: Date.now() - 120000 },
+        { id: 2, url: 'https://discord.com/api', status: 'running', results: 142, date: 'now', startedAt: Date.now() - 15000 },
+      ]);
+      const [url, setUrl] = useState('');
+      const [tab, setTab] = useState('jobs');
+
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setJobs(prevJobs =>
+            prevJobs.map(job => {
+              if (job.status === 'queued') {
+                return { ...job, status: 'running', date: 'now' };
+              }
+              if (job.status === 'running') {
+                const elapsed = Date.now() - job.startedAt;
+                const newResults = Math.min(job.results + Math.floor(Math.random() * 5) + 1, 500);
+                const shouldComplete = elapsed > 20000 || Math.random() > 0.95;
+
+                if (shouldComplete) {
+                  return {
+                    ...job,
+                    status: 'completed',
+                    results: newResults,
+                    date: 'now',
+                  };
+                }
+                return { ...job, results: newResults, date: 'now' };
+              }
+              return job;
+            })
+          );
+        }, 1000);
+
+        return () => clearInterval(interval);
+      }, []);
+
+      const addJob = () => {
+        if (!url) return;
+        setJobs([{
+          id: Math.random(),
+          url,
+          status: 'queued',
+          results: 0,
+          date: 'now',
+          startedAt: Date.now(),
+        }, ...jobs]);
+        setUrl('');
+      };
+
+      const deleteJob = (id) => setJobs(jobs.filter(j => j.id !== id));
+
+      return (
+        <div>
+          <nav>
+            <div className="title">OBSCURA DASHBOARD</div>
+            <button>⚙️ Settings</button>
+          </nav>
+
+          <div className="container">
+            <div className="tabs">
+              {['jobs', 'create', 'results'].map(t => (
+                <button
+                  key={t}
+                  className={`tab-btn ${tab === t ? 'active' : ''}`}
+                  onClick={() => setTab(t)}
+                >
+                  {t.toUpperCase()}
+                </button>
+              ))}
+            </div>
+
+            {tab === 'jobs' && (
+              <div>
+                <h2>Active Scrapes</h2>
+                <div className="jobs-grid">
+                  {jobs.map(job => {
+                    const statusColor = job.status === 'completed' ? '#00d9ff' : job.status === 'running' ? '#ffa500' : '#666';
+                    const progress = job.status === 'running' ? (job.results / 500) * 100 : job.status === 'completed' ? 100 : 0;
+
+                    return (
+                      <div key={job.id} className={`job-card ${job.status}`}>
+                        <div className="job-url">{job.url}</div>
+                        <div className="job-meta">
+                          <span className={`status-badge status-${job.status}`}>{job.status.toUpperCase()}</span>
+                          {' • '}{job.results} results • {job.date}
+                        </div>
+                        {job.status !== 'queued' && (
+                          <div className="progress-bar">
+                            <div
+                              className="progress-fill"
+                              style={{
+                                width: `${progress}%`,
+                                backgroundColor: statusColor,
+                              }}
+                            />
+                          </div>
+                        )}
+                        <div className="job-actions">
+                          <button className="btn btn-download">⬇️ Download</button>
+                          <button
+                            className="btn btn-delete"
+                            onClick={() => deleteJob(job.id)}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {tab === 'create' && (
+              <div>
+                <h2>New Scrape</h2>
+                <div className="create-form">
+                  <div className="form-group">
+                    <label className="form-label">URL</label>
+                    <input
+                      className="form-input"
+                      value={url}
+                      onChange={e => setUrl(e.target.value)}
+                      placeholder="https://reddit.com/r/..."
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Options</label>
+                    <div className="checkbox-group">
+                      <label className="checkbox-label">
+                        <input type="checkbox" defaultChecked />
+                        Stealth mode
+                      </label>
+                    </div>
+                    <div className="checkbox-group">
+                      <label className="checkbox-label">
+                        <input type="checkbox" defaultChecked />
+                        Wait until networkidle0
+                      </label>
+                    </div>
+                  </div>
+                  <button
+                    className="btn-launch"
+                    onClick={addJob}
+                  >
+                    ▶️ Launch Scrape
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {tab === 'results' && (
+              <div>
+                <h2>Results</h2>
+                <div className="create-form">
+                  <div className="total-scraped">Total scraped: {jobs.reduce((a, j) => a + j.results, 0)} items</div>
+                  <div className="results-grid">
+                    {jobs.filter(j => j.results > 0).map(job => (
+                      <div key={job.id} className="result-card">
+                        <div className="result-url">{job.url}</div>
+                        <div className="result-count">{job.results}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<Dashboard />, document.getElementById('root'));
+  </script>
+</body>
+</html>

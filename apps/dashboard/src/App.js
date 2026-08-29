@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Plus, Trash2, Download, Settings } from 'lucide-react';
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState([
