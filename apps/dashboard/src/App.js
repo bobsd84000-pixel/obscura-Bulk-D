@@ -1,17 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Play, Plus, Trash2, Download, Settings } from 'lucide-react';
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState([
-    { id: 1, url: 'https://reddit.com/r/entrepreneur', status: 'completed', results: 487, date: '2min ago' },
-    { id: 2, url: 'https://discord.com/api', status: 'running', results: 142, date: 'now' },
+    { id: 1, url: 'https://reddit.com/r/entrepreneur', status: 'completed', results: 487, date: '2min ago', startedAt: Date.now() - 120000 },
+    { id: 2, url: 'https://discord.com/api', status: 'running', results: 142, date: 'now', startedAt: Date.now() - 15000 },
   ]);
   const [url, setUrl] = useState('');
   const [tab, setTab] = useState('jobs');
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setJobs(prevJobs =>
+        prevJobs.map(job => {
+          if (job.status === 'queued') {
+            return { ...job, status: 'running', date: 'now' };
+          }
+          if (job.status === 'running') {
+            const elapsed = Date.now() - job.startedAt;
+            const newResults = Math.min(job.results + Math.floor(Math.random() * 5) + 1, 500);
+            const shouldComplete = elapsed > 20000 || Math.random() > 0.95;
+
+            if (shouldComplete) {
+              return {
+                ...job,
+                status: 'completed',
+                results: newResults,
+                date: 'now',
+              };
+            }
+            return { ...job, results: newResults, date: 'now' };
+          }
+          return job;
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const addJob = () => {
     if (!url) return;
-    setJobs([{ id: Math.random(), url, status: 'queued', results: 0, date: 'now' }, ...jobs]);
+    setJobs([{
+      id: Math.random(),
+      url,
+      status: 'queued',
+      results: 0,
+      date: 'now',
+      startedAt: Date.now(),
+    }, ...jobs]);
     setUrl('');
   };
 
@@ -53,27 +90,46 @@ export default function Dashboard() {
           <div>
             <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>Active Scrapes</h2>
             <div style={{ display: 'grid', gap: '12px' }}>
-              {jobs.map(job => (
-                <div key={job.id} style={{ background: '#1a1a1a', border: '1px solid #222', borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>{job.url}</div>
-                    <div style={{ fontSize: '11px', color: '#888' }}>
-                      {job.status} • {job.results} results • {job.date}
+              {jobs.map(job => {
+                const statusColor = job.status === 'completed' ? '#00d9ff' : job.status === 'running' ? '#ffa500' : '#666';
+                const progress = job.status === 'running' ? (job.results / 500) * 100 : job.status === 'completed' ? 100 : 0;
+
+                return (
+                  <div key={job.id} style={{ background: '#1a1a1a', border: `1px solid ${statusColor}33`, borderRadius: '8px', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>{job.url}</div>
+                        <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px' }}>
+                          <span style={{ color: statusColor, fontWeight: 'bold' }}>{job.status.toUpperCase()}</span> • {job.results} results • {job.date}
+                        </div>
+                        {job.status !== 'queued' && (
+                          <div style={{ background: '#0a0a0a', height: '4px', borderRadius: '2px', overflow: 'hidden' }}>
+                            <div
+                              style={{
+                                height: '100%',
+                                background: statusColor,
+                                width: `${progress}%`,
+                                transition: 'width 0.3s ease',
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button style={{ background: '#00d9ff', color: '#000', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
+                        ⬇️ Download
+                      </button>
+                      <button
+                        onClick={() => deleteJob(job.id)}
+                        style={{ background: '#ff4444', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
+                      >
+                        ✕
+                      </button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button style={{ background: '#00d9ff', color: '#000', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' }}>
-                      ⬇️ Download
-                    </button>
-                    <button
-                      onClick={() => deleteJob(job.id)}
-                      style={{ background: '#ff4444', color: '#fff', border: 'none', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
