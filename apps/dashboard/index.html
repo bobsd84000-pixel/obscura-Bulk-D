@@ -306,6 +306,13 @@
       color: #888;
       font-size: 13px;
     }
+    .auth-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 70vh;
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
@@ -327,6 +334,15 @@
     }
 
     function Dashboard() {
+      const [session, setSession] = useState(null);
+      const [authChecked, setAuthChecked] = useState(false);
+      const [authMode, setAuthMode] = useState('signin');
+      const [authEmail, setAuthEmail] = useState('');
+      const [authPassword, setAuthPassword] = useState('');
+      const [authError, setAuthError] = useState('');
+      const [authNotice, setAuthNotice] = useState('');
+      const [authBusy, setAuthBusy] = useState(false);
+
       const [jobs, setJobs] = useState([]);
       const [logs, setLogs] = useState([]);
       const [loading, setLoading] = useState(true);
@@ -335,6 +351,46 @@
       const [tab, setTab] = useState('jobs');
       const logsEndRef = useRef(null);
 
+      useEffect(() => {
+        db.auth.getSession().then(({ data }) => {
+          setSession(data.session);
+          setAuthChecked(true);
+        });
+        const { data: listener } = db.auth.onAuthStateChange((_event, newSession) => {
+          setSession(newSession);
+        });
+        return () => listener.subscription.unsubscribe();
+      }, []);
+
+      const signIn = async () => {
+        setAuthBusy(true);
+        setAuthError('');
+        setAuthNotice('');
+        const { error } = await db.auth.signInWithPassword({ email: authEmail, password: authPassword });
+        if (error) setAuthError(error.message);
+        setAuthBusy(false);
+      };
+
+      const signUp = async () => {
+        setAuthBusy(true);
+        setAuthError('');
+        setAuthNotice('');
+        const { data, error } = await db.auth.signUp({ email: authEmail, password: authPassword });
+        if (error) {
+          setAuthError(error.message);
+        } else if (data.user && !data.session) {
+          setAuthNotice('Account created. Check your email to confirm before signing in.');
+        }
+        setAuthBusy(false);
+      };
+
+      const signOut = async () => {
+        await db.auth.signOut();
+        setJobs([]);
+        setLogs([]);
+        setLoading(true);
+      };
+
       const addLog = async (level, msg, jobId = null) => {
         setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), level, msg }]);
         const { error } = await db.from('job_logs').insert({ job_id: jobId, level, message: msg });
@@ -342,6 +398,11 @@
       };
 
       useEffect(() => {
+        if (!session) {
+          setLoading(false);
+          return;
+        }
+        setLoading(true);
         async function loadInitial() {
           const [jobsRes, logsRes] = await Promise.all([
             db.from('jobs').select('*').order('created_at', { ascending: false }),
@@ -371,9 +432,10 @@
           setLoading(false);
         }
         loadInitial();
-      }, []);
+      }, [session]);
 
       useEffect(() => {
+        if (!session) return;
         const interval = setInterval(() => {
           setJobs(prevJobs =>
             prevJobs.map(job => {
@@ -411,7 +473,7 @@
         }, 1000);
 
         return () => clearInterval(interval);
-      }, []);
+      }, [session]);
 
       const addJob = async () => {
         if (!url) return;
@@ -505,6 +567,71 @@
         addLog('info', `Exported all results as CSV (${allRows.length} items)`);
       };
 
+      if (!authChecked) {
+        return (
+          <div>
+            <nav>
+              <div className="title">OBSCURA DASHBOARD</div>
+            </nav>
+            <div className="loading-screen">Checking session...</div>
+          </div>
+        );
+      }
+
+      if (!session) {
+        return (
+          <div>
+            <nav>
+              <div className="title">OBSCURA DASHBOARD</div>
+            </nav>
+            <div className="auth-wrapper">
+              <div className="create-form" style={{ maxWidth: '360px', width: '100%' }}>
+                <h2 style={{ fontSize: '20px', marginBottom: '20px' }}>
+                  {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                </h2>
+                <label className="form-label">Email</label>
+                <input
+                  className="form-input"
+                  type="email"
+                  value={authEmail}
+                  onChange={e => setAuthEmail(e.target.value)}
+                  placeholder="you@example.com"
+                />
+                <label className="form-label">Password</label>
+                <input
+                  className="form-input"
+                  type="password"
+                  value={authPassword}
+                  onChange={e => setAuthPassword(e.target.value)}
+                  placeholder="••••••••"
+                  onKeyDown={e => e.key === 'Enter' && (authMode === 'signin' ? signIn() : signUp())}
+                />
+                {authError && <div style={{ color: '#ff4444', fontSize: '11px', marginBottom: '12px' }}>{authError}</div>}
+                {authNotice && <div style={{ color: '#00ff88', fontSize: '11px', marginBottom: '12px' }}>{authNotice}</div>}
+                <button
+                  className="btn btn-download"
+                  style={{ width: '100%', justifyContent: 'center', padding: '12px', marginBottom: '10px' }}
+                  disabled={authBusy || !authEmail || !authPassword}
+                  onClick={authMode === 'signin' ? signIn : signUp}
+                >
+                  {authBusy ? 'Please wait...' : authMode === 'signin' ? 'Sign In' : 'Sign Up'}
+                </button>
+                <button
+                  style={{ width: '100%', background: 'transparent', color: '#888', border: 'none', cursor: 'pointer', fontSize: '11px', fontFamily: 'inherit' }}
+                  onClick={() => {
+                    setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+                    setAuthError('');
+                    setAuthNotice('');
+                  }}
+                >
+                  {authMode === 'signin' ? "No account? Sign up" : 'Already have an account? Sign in'}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       if (loading) {
         return (
           <div>
@@ -526,6 +653,8 @@
                 <span className={`db-dot ${dbStatus === 'connected' ? 'connected' : dbStatus === 'error' ? 'error' : ''}`}></span>
                 {dbStatus === 'connected' ? 'Supabase connected' : dbStatus === 'error' ? 'Connection error' : 'Connecting...'}
               </div>
+              <span style={{ fontSize: '11px', color: '#666' }}>{session.user.email}</span>
+              <button onClick={signOut}>Sign Out</button>
               <button>⚙️ Settings</button>
             </div>
           </nav>
