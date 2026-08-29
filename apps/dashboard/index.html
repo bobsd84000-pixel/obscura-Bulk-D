@@ -369,6 +369,7 @@
       const [authError, setAuthError] = useState('');
       const [authNotice, setAuthNotice] = useState('');
       const [authBusy, setAuthBusy] = useState(false);
+      const [authCheckError, setAuthCheckError] = useState('');
 
       const [jobs, setJobs] = useState([]);
       const [logs, setLogs] = useState([]);
@@ -379,14 +380,43 @@
       const logsEndRef = useRef(null);
 
       useEffect(() => {
-        db.auth.getSession().then(({ data }) => {
-          setSession(data.session);
+        let cancelled = false;
+
+        // Without this, a request that never settles (paused project, no
+        // network) leaves the page stuck on "Checking session..." forever.
+        const timeout = setTimeout(() => {
+          if (cancelled) return;
+          setAuthCheckError(
+            'Supabase did not respond within 15s. The project may be paused ' +
+            '(free-tier projects sleep after inactivity and take ~30-60s to wake) ' +
+            'or unreachable from this network.'
+          );
           setAuthChecked(true);
-        });
+        }, 15000);
+
+        db.auth.getSession()
+          .then(({ data, error }) => {
+            if (cancelled) return;
+            if (error) setAuthCheckError(error.message);
+            setSession(data ? data.session : null);
+            setAuthChecked(true);
+          })
+          .catch(err => {
+            if (cancelled) return;
+            setAuthCheckError(err && err.message ? err.message : String(err));
+            setAuthChecked(true);
+          })
+          .finally(() => clearTimeout(timeout));
+
         const { data: listener } = db.auth.onAuthStateChange((_event, newSession) => {
           setSession(newSession);
         });
-        return () => listener.subscription.unsubscribe();
+
+        return () => {
+          cancelled = true;
+          clearTimeout(timeout);
+          listener.subscription.unsubscribe();
+        };
       }, []);
 
       const signIn = async () => {
@@ -431,12 +461,21 @@
         }
         setLoading(true);
         async function loadInitial() {
-          const [jobsRes, logsRes] = await Promise.all([
-            db.from('jobs').select('*').order('created_at', { ascending: false }),
-            db.from('job_logs').select('*').order('created_at', { ascending: true }).limit(200),
-          ]);
+          let jobsRes, logsRes;
+          try {
+            [jobsRes, logsRes] = await Promise.all([
+              db.from('jobs').select('*').order('created_at', { ascending: false }),
+              db.from('job_logs').select('*').order('created_at', { ascending: true }).limit(200),
+            ]);
+          } catch (err) {
+            console.error('initial load failed:', err);
+            setDbStatus('error');
+            setLoading(false);
+            return;
+          }
 
           if (jobsRes.error || logsRes.error) {
+            console.error('initial load failed:', jobsRes.error || logsRes.error);
             setDbStatus('error');
             setLoading(false);
             return;
@@ -616,6 +655,19 @@
                 <h2 style={{ fontSize: '20px', marginBottom: '20px' }}>
                   {authMode === 'signin' ? 'Sign In' : 'Create Account'}
                 </h2>
+                {authCheckError && (
+                  <div style={{
+                    border: '1px solid #ffa500',
+                    borderRadius: '4px',
+                    padding: '10px',
+                    marginBottom: '16px',
+                    color: '#ffa500',
+                    fontSize: '11px',
+                    lineHeight: 1.5,
+                  }}>
+                    Could not reach Supabase: {authCheckError}
+                  </div>
+                )}
                 <label className="form-label">Email</label>
                 <input
                   className="form-input"
