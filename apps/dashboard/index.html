@@ -7,6 +7,7 @@
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/react.production.min.js"></script>
   <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
       margin: 0;
@@ -276,45 +277,110 @@
       font-size: 12px;
       margin-bottom: 12px;
     }
+    .db-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #888;
+    }
+    .db-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #666;
+    }
+    .db-dot.connected {
+      background: #00ff88;
+      box-shadow: 0 0 6px #00ff8899;
+    }
+    .db-dot.error {
+      background: #ff4444;
+      box-shadow: 0 0 6px #ff444499;
+    }
+    .loading-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 60vh;
+      color: #888;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
+
+    const SUPABASE_URL = 'https://xunsrqeelmtgwpywdqlw.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1bnNycWVlbG10Z3dweXdkcWx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0NTkwOTUsImV4cCI6MjA5ODAzNTA5NX0.g_gdrOLRrjikA1eyRha0ut-ZpMeCvFrp2R9e9N4bwgU';
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function relativeTime(iso) {
+      const diffSec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (diffSec < 5) return 'now';
+      if (diffSec < 60) return `${diffSec}s ago`;
+      if (diffSec < 3600) return `${Math.floor(diffSec / 60)}min ago`;
+      return `${Math.floor(diffSec / 3600)}h ago`;
+    }
 
     function Dashboard() {
-      const [jobs, setJobs] = useState([
-        { id: 1, url: 'https://reddit.com/r/entrepreneur', status: 'completed', results: 487, date: '2min ago', startedAt: Date.now() - 120000 },
-        { id: 2, url: 'https://discord.com/api', status: 'running', results: 142, date: 'now', startedAt: Date.now() - 15000 },
-      ]);
+      const [jobs, setJobs] = useState([]);
+      const [logs, setLogs] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [dbStatus, setDbStatus] = useState('connecting');
       const [url, setUrl] = useState('');
       const [tab, setTab] = useState('jobs');
-      const [logs, setLogs] = useState([
-        { timestamp: new Date(Date.now() - 120000).toLocaleTimeString(), level: 'info', msg: 'Scrape started: reddit.com/r/entrepreneur' },
-        { timestamp: new Date(Date.now() - 119000).toLocaleTimeString(), level: 'debug', msg: 'Waiting for page load...' },
-        { timestamp: new Date(Date.now() - 100000).toLocaleTimeString(), level: 'success', msg: '✓ Page loaded, 487 items found' },
-        { timestamp: new Date(Date.now() - 15000).toLocaleTimeString(), level: 'info', msg: 'Scrape started: discord.com/api' },
-        { timestamp: new Date(Date.now() - 14000).toLocaleTimeString(), level: 'debug', msg: 'networkidle0 enabled' },
-      ]);
-      const logsEndRef = React.useRef(null);
+      const logsEndRef = useRef(null);
+
+      const addLog = async (level, msg, jobId = null) => {
+        setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), level, msg }]);
+        const { error } = await db.from('job_logs').insert({ job_id: jobId, level, message: msg });
+        if (error) console.error('log insert failed:', error.message);
+      };
 
       useEffect(() => {
-        const addLog = (level, msg) => {
-          setLogs(prev => [...prev, {
-            timestamp: new Date().toLocaleTimeString(),
-            level,
-            msg
-          }]);
-        };
+        async function loadInitial() {
+          const [jobsRes, logsRes] = await Promise.all([
+            db.from('jobs').select('*').order('created_at', { ascending: false }),
+            db.from('job_logs').select('*').order('created_at', { ascending: true }).limit(200),
+          ]);
 
+          if (jobsRes.error || logsRes.error) {
+            setDbStatus('error');
+            setLoading(false);
+            return;
+          }
+
+          setJobs(jobsRes.data.map(j => ({
+            id: j.id,
+            url: j.url,
+            status: j.status,
+            results: j.results,
+            date: relativeTime(j.created_at),
+            startedAt: new Date(j.started_at).getTime(),
+          })));
+          setLogs(logsRes.data.map(l => ({
+            timestamp: new Date(l.created_at).toLocaleTimeString(),
+            level: l.level,
+            msg: l.message,
+          })));
+          setDbStatus('connected');
+          setLoading(false);
+        }
+        loadInitial();
+      }, []);
+
+      useEffect(() => {
         const interval = setInterval(() => {
           setJobs(prevJobs =>
             prevJobs.map(job => {
               if (job.status === 'queued') {
-                addLog('info', `Started: ${job.url}`);
-                addLog('debug', 'Initializing puppeteer...');
+                addLog('info', `Started: ${job.url}`, job.id);
+                addLog('debug', 'Initializing puppeteer...', job.id);
+                db.from('jobs').update({ status: 'running' }).eq('id', job.id).then();
                 return { ...job, status: 'running', date: 'now' };
               }
               if (job.status === 'running') {
@@ -323,11 +389,12 @@
                 const shouldComplete = elapsed > 20000 || Math.random() > 0.95;
 
                 if (newResults % 50 === 0 && newResults !== job.results) {
-                  addLog('debug', `Scraped ${newResults} items...`);
+                  addLog('debug', `Scraped ${newResults} items...`, job.id);
                 }
 
                 if (shouldComplete) {
-                  addLog('success', `✓ Completed: ${newResults} items found in ${(elapsed / 1000).toFixed(1)}s`);
+                  addLog('success', `✓ Completed: ${newResults} items found in ${(elapsed / 1000).toFixed(1)}s`, job.id);
+                  db.from('jobs').update({ status: 'completed', results: newResults, completed_at: new Date().toISOString() }).eq('id', job.id).then();
                   return {
                     ...job,
                     status: 'completed',
@@ -335,6 +402,7 @@
                     date: 'now',
                   };
                 }
+                db.from('jobs').update({ results: newResults }).eq('id', job.id).then();
                 return { ...job, results: newResults, date: 'now' };
               }
               return job;
@@ -345,25 +413,36 @@
         return () => clearInterval(interval);
       }, []);
 
-      const addJob = () => {
+      const addJob = async () => {
         if (!url) return;
-        setLogs(prev => [...prev, {
-          timestamp: new Date().toLocaleTimeString(),
-          level: 'info',
-          msg: `Job queued: ${url}`
-        }]);
+        const { data, error } = await db.from('jobs').insert({ url, status: 'queued', results: 0 }).select().single();
+        if (error) {
+          addLog('error', `Failed to create job: ${error.message}`);
+          return;
+        }
+        addLog('info', `Job queued: ${url}`, data.id);
         setJobs([{
-          id: Math.random(),
-          url,
-          status: 'queued',
-          results: 0,
+          id: data.id,
+          url: data.url,
+          status: data.status,
+          results: data.results,
           date: 'now',
-          startedAt: Date.now(),
+          startedAt: new Date(data.started_at).getTime(),
         }, ...jobs]);
         setUrl('');
       };
 
-      const deleteJob = (id) => setJobs(jobs.filter(j => j.id !== id));
+      const deleteJob = async (id) => {
+        setJobs(jobs.filter(j => j.id !== id));
+        const { error } = await db.from('jobs').delete().eq('id', id);
+        if (error) console.error('delete failed:', error.message);
+      };
+
+      const clearLogs = async () => {
+        setLogs([]);
+        const { error } = await db.from('job_logs').delete().neq('id', 0);
+        if (error) console.error('clear logs failed:', error.message);
+      };
 
       const generateFixtureRows = (job) => {
         const rows = [];
@@ -394,11 +473,7 @@
         const rows = generateFixtureRows(job);
         const filename = `${job.url.replace(/[^a-z0-9]/gi, '_')}_${job.id}.json`;
         triggerDownload(JSON.stringify(rows, null, 2), filename, 'application/json');
-        setLogs(prev => [...prev, {
-          timestamp: new Date().toLocaleTimeString(),
-          level: 'info',
-          msg: `Exported ${rows.length} items as JSON: ${filename}`
-        }]);
+        addLog('info', `Exported ${rows.length} items as JSON: ${filename}`, job.id);
       };
 
       const downloadJobCSV = (job) => {
@@ -410,21 +485,13 @@
         const csv = [header, ...csvRows].join('\n');
         const filename = `${job.url.replace(/[^a-z0-9]/gi, '_')}_${job.id}.csv`;
         triggerDownload(csv, filename, 'text/csv');
-        setLogs(prev => [...prev, {
-          timestamp: new Date().toLocaleTimeString(),
-          level: 'info',
-          msg: `Exported ${rows.length} items as CSV: ${filename}`
-        }]);
+        addLog('info', `Exported ${rows.length} items as CSV: ${filename}`, job.id);
       };
 
       const exportAllJSON = () => {
         const allRows = jobs.filter(j => j.results > 0).flatMap(generateFixtureRows);
         triggerDownload(JSON.stringify(allRows, null, 2), 'obscura_export_all.json', 'application/json');
-        setLogs(prev => [...prev, {
-          timestamp: new Date().toLocaleTimeString(),
-          level: 'info',
-          msg: `Exported all results as JSON (${allRows.length} items)`
-        }]);
+        addLog('info', `Exported all results as JSON (${allRows.length} items)`);
       };
 
       const exportAllCSV = () => {
@@ -435,18 +502,32 @@
         );
         const csv = [header, ...csvRows].join('\n');
         triggerDownload(csv, 'obscura_export_all.csv', 'text/csv');
-        setLogs(prev => [...prev, {
-          timestamp: new Date().toLocaleTimeString(),
-          level: 'info',
-          msg: `Exported all results as CSV (${allRows.length} items)`
-        }]);
+        addLog('info', `Exported all results as CSV (${allRows.length} items)`);
       };
+
+      if (loading) {
+        return (
+          <div>
+            <nav>
+              <div className="title">OBSCURA DASHBOARD</div>
+              <button>⚙️ Settings</button>
+            </nav>
+            <div className="loading-screen">Connecting to Supabase...</div>
+          </div>
+        );
+      }
 
       return (
         <div>
           <nav>
             <div className="title">OBSCURA DASHBOARD</div>
-            <button>⚙️ Settings</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div className="db-status">
+                <span className={`db-dot ${dbStatus === 'connected' ? 'connected' : dbStatus === 'error' ? 'error' : ''}`}></span>
+                {dbStatus === 'connected' ? 'Supabase connected' : dbStatus === 'error' ? 'Connection error' : 'Connecting...'}
+              </div>
+              <button>⚙️ Settings</button>
+            </div>
           </nav>
 
           <div className="container">
@@ -586,7 +667,7 @@
                   <h2 style={{ margin: 0 }}>Execution Logs</h2>
                   <button
                     className="log-btn-clear"
-                    onClick={() => setLogs([])}
+                    onClick={clearLogs}
                   >
                     Clear Logs
                   </button>
