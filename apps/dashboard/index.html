@@ -365,6 +365,83 @@
 
       const deleteJob = (id) => setJobs(jobs.filter(j => j.id !== id));
 
+      const generateFixtureRows = (job) => {
+        const rows = [];
+        for (let i = 1; i <= job.results; i++) {
+          rows.push({
+            id: i,
+            source: job.url,
+            title: `Item ${i} — ${job.url.replace(/^https?:\/\//, '').split('/')[0]}`,
+            value: Math.floor(Math.random() * 900) + 100,
+            scraped_at: job.date,
+          });
+        }
+        return rows;
+      };
+
+      const triggerDownload = (content, filename, mimeType) => {
+        const blob = new Blob([content], { type: mimeType });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      };
+
+      const downloadJobJSON = (job) => {
+        const rows = generateFixtureRows(job);
+        const filename = `${job.url.replace(/[^a-z0-9]/gi, '_')}_${job.id}.json`;
+        triggerDownload(JSON.stringify(rows, null, 2), filename, 'application/json');
+        setLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          level: 'info',
+          msg: `Exported ${rows.length} items as JSON: ${filename}`
+        }]);
+      };
+
+      const downloadJobCSV = (job) => {
+        const rows = generateFixtureRows(job);
+        const header = 'id,source,title,value,scraped_at';
+        const csvRows = rows.map(r =>
+          [r.id, r.source, `"${r.title}"`, r.value, r.scraped_at].join(',')
+        );
+        const csv = [header, ...csvRows].join('\n');
+        const filename = `${job.url.replace(/[^a-z0-9]/gi, '_')}_${job.id}.csv`;
+        triggerDownload(csv, filename, 'text/csv');
+        setLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          level: 'info',
+          msg: `Exported ${rows.length} items as CSV: ${filename}`
+        }]);
+      };
+
+      const exportAllJSON = () => {
+        const allRows = jobs.filter(j => j.results > 0).flatMap(generateFixtureRows);
+        triggerDownload(JSON.stringify(allRows, null, 2), 'obscura_export_all.json', 'application/json');
+        setLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          level: 'info',
+          msg: `Exported all results as JSON (${allRows.length} items)`
+        }]);
+      };
+
+      const exportAllCSV = () => {
+        const allRows = jobs.filter(j => j.results > 0).flatMap(generateFixtureRows);
+        const header = 'id,source,title,value,scraped_at';
+        const csvRows = allRows.map(r =>
+          [r.id, r.source, `"${r.title}"`, r.value, r.scraped_at].join(',')
+        );
+        const csv = [header, ...csvRows].join('\n');
+        triggerDownload(csv, 'obscura_export_all.csv', 'text/csv');
+        setLogs(prev => [...prev, {
+          timestamp: new Date().toLocaleTimeString(),
+          level: 'info',
+          msg: `Exported all results as CSV (${allRows.length} items)`
+        }]);
+      };
+
       return (
         <div>
           <nav>
@@ -412,7 +489,22 @@
                           </div>
                         )}
                         <div className="job-actions">
-                          <button className="btn btn-download">⬇️ Download</button>
+                          <button
+                            className="btn btn-download"
+                            disabled={job.results === 0}
+                            style={job.results === 0 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                            onClick={() => job.results > 0 && downloadJobJSON(job)}
+                          >
+                            ⬇️ JSON
+                          </button>
+                          <button
+                            className="btn btn-download"
+                            disabled={job.results === 0}
+                            style={job.results === 0 ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                            onClick={() => job.results > 0 && downloadJobCSV(job)}
+                          >
+                            ⬇️ CSV
+                          </button>
                           <button
                             className="btn btn-delete"
                             onClick={() => deleteJob(job.id)}
@@ -467,7 +559,13 @@
 
             {tab === 'results' && (
               <div>
-                <h2>Results</h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ margin: 0 }}>Results</h2>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn btn-download" onClick={exportAllJSON}>⬇️ Export All (JSON)</button>
+                    <button className="btn btn-download" onClick={exportAllCSV}>⬇️ Export All (CSV)</button>
+                  </div>
+                </div>
                 <div className="create-form">
                   <div className="total-scraped">Total scraped: {jobs.reduce((a, j) => a + j.results, 0)} items</div>
                   <div className="results-grid">
