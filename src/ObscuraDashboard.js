@@ -68,26 +68,13 @@ export default function ObscuraDashboard() {
 
   const scrapeSite = (url, siteType, steps) => {
     setRunning(true);
-    setLogs(['🚀 Lancement Obscura...', '✅ Instance créée (30MB RAM)', '🔄 Chromium démarré', '📍 CDP connecté - 14ms']);
-    steps.forEach((s, i) => setTimeout(() => setLogs(l => [...l, s]), 400 * (i + 1)));
+    setLogs(['ℹ️ Mode démo : aucun site n\'est contacté, données d\'exemple affichées.']);
     setTimeout(() => {
-      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url))
-        .then(r => { if (!r.ok) throw new Error('Network error'); return r.text(); })
-        .then(html => {
-          setLogs(l => [...l, '📄 HTML récupéré — parsing DOM...']);
-          const fallback = getFallbackProducts(siteType);
-          setScrapedProducts(prev => [...prev.filter(p => p.siteType !== siteType), ...fallback]);
-          setLogs(l => [...l, '✅ ' + fallback.length + ' produits extraits de ' + siteType]);
-          setRunning(false);
-          setActiveTab('results');
-        })
-        .catch(() => {
-          const fallback = getFallbackProducts(siteType);
-          setScrapedProducts(prev => [...prev.filter(p => p.siteType !== siteType), ...fallback]);
-          setLogs(l => [...l, '⚠️ Proxy — fallback activé', '✅ ' + fallback.length + ' produits chargés']);
-          setRunning(false);
-          setActiveTab('results');
-        });
+      const exemples = getFallbackProducts(siteType);
+      setScrapedProducts(prev => [...prev.filter(p => p.siteType !== siteType), ...exemples]);
+      setLogs(l => [...l, '✅ ' + exemples.length + ' exemples affichés (' + siteType + ')']);
+      setRunning(false);
+      setActiveTab('results');
     }, steps.length * 400 + 600);
   };
 
