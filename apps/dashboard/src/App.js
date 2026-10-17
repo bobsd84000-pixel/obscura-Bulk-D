@@ -54,9 +54,9 @@ export default function Dashboard() {
             <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>Active Scrapes</h2>
             <div style={{ display: 'grid', gap: '12px' }}>
               {jobs.map(job => (
-                <div key={job.id} style={{ background: '#1a1a1a', border: '1px solid #222', borderRadius: '8px', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>{job.url}</div>
+                <div key={job.id} style={{ background: '#1a1a1a', border: '1px solid #222', borderRadius: '8px', padding: '16px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ minWidth: 0, flex: '1 1 180px' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '4px', overflowWrap: 'anywhere' }}>{job.url}</div>
                     <div style={{ fontSize: '11px', color: '#888' }}>
                       {job.status} • {job.results} results • {job.date}
                     </div>
