@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Obscura Dashboard, lancez vos collectes sans écrire de code</title>
+<meta name="description" content="Obscura Dashboard : créez une collecte, suivez son état et téléchargez les résultats, depuis un tableau de bord simple.">
+<meta name="theme-color" content="#0a0a0a">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Obscura Dashboard">
+<meta property="og:description" content="Créez, suivez et téléchargez vos collectes depuis un tableau de bord.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0a'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%2300d9ff' font-family='monospace' font-weight='700'%3EO%3C/text%3E%3C/svg%3E">
+<script>(function(){var t;try{t=new URLSearchParams(location.search).get('theme')||localStorage.getItem('theme')}catch(e){}if(t==='clair')document.documentElement.dataset.theme='clair'})()</script>
+<style>
+:root{--fond:#0a0a0a;--panneau:#141414;--encre:#e6e6e6;--sourd:#8c8c8c;--filet:#262626;--signal:#00d9ff;--sur-signal:#0a0a0a;--signal-trait:#00d9ff;--ok:#00d9ff;
+--f-texte:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--f-code:ui-monospace,Menlo,Consolas,monospace;--r:6px}
+html[data-theme="clair"]{--fond:#f2f4f5;--panneau:#e3e7ea;--encre:#0a0a0a;--sourd:#4d5560;--filet:#b8bfc6;--signal:#006c80;--sur-signal:#ffffff;--signal-trait:#006c80}
+*{box-sizing:border-box;margin:0}
+body{background:var(--fond);color:var(--encre);font:400 1rem/1.6 var(--f-texte);overflow-x:hidden}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--signal-trait);outline-offset:3px}
+.l{max-width:1080px;margin:0 auto;padding:0 20px}
+header .l{display:flex;align-items:center;justify-content:space-between;height:68px;border-bottom:1px solid var(--filet)}
+.logo{font:700 .95rem var(--f-code);letter-spacing:.14em;color:var(--signal-trait);text-decoration:none}
+#tg{background:none;border:1px solid var(--filet);color:var(--encre);width:40px;height:40px;border-radius:50%;display:grid;place-items:center;cursor:pointer}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;padding:88px 0 80px}
+h1{font-size:clamp(2.1rem,4.8vw,3.4rem);line-height:1.08;letter-spacing:-.02em;font-weight:700;max-width:14ch}
+.chapo{color:var(--sourd);font-size:1.1rem;max-width:30em;margin:22px 0 32px}
+.btn{display:inline-block;background:var(--signal);color:var(--sur-signal);font:600 .95rem var(--f-texte);padding:13px 22px;border-radius:var(--r);text-decoration:none}
+.btn:hover{filter:brightness(1.08)}
+.ecran{background:var(--panneau);border:1px solid var(--filet);border-radius:10px;overflow:hidden}
+.ecran-t{display:flex;gap:6px;padding:12px 14px;border-bottom:1px solid var(--filet)}
+.ecran-t i{width:10px;height:10px;border-radius:50%;background:var(--filet);display:block}
+.ligne{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px 14px;padding:16px;border-bottom:1px solid var(--filet)}
+.ligne:last-child{border-bottom:0}
+.ligne b{display:block;font:600 .92rem var(--f-code);overflow-wrap:anywhere}
+.ligne span{font-size:.8rem;color:var(--sourd);font-family:var(--f-code)}
+.etat{font:600 .75rem var(--f-code);color:var(--signal-trait);border:1px solid currentColor;padding:2px 8px;border-radius:4px;white-space:nowrap}
+.etat.fini{color:var(--sourd)}
+section{padding:72px 0;border-top:1px solid var(--filet)}
+h2{font-size:1.6rem;letter-spacing:-.01em;margin-bottom:30px;max-width:24ch}
+.etapes{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;list-style:none;padding:0}
+.etapes h3{font-size:1rem;margin-bottom:6px}
+.etapes p{color:var(--sourd);font-size:.95rem}
+.etapes li::before{content:"";display:block;width:28px;height:2px;background:var(--signal-trait);margin-bottom:14px}
+.fin{padding:64px 0}
+.fin .l{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:22px}
+.fin p{color:var(--sourd);max-width:34em}
+footer{border-top:1px solid var(--filet);padding:28px 0 44px;color:var(--sourd);font-size:.85rem}
+footer .l{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 20px}
+@media (max-width:820px){.hero{grid-template-columns:1fr;gap:44px;padding:56px 0 56px}.etapes{grid-template-columns:1fr;gap:24px}section{padding:56px 0}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header><div class="l">
+<a class="logo" href="#">OBSCURA</a>
+<button id="tg" type="button" aria-label="Thème clair" aria-pressed="false"></button>
+</div></header>
+
+<main>
+<div class="l hero">
+<div>
+<h1>Lancez une collecte, suivez-la, téléchargez le résultat.</h1>
+<p class="chapo">Obscura Dashboard vous donne une liste de vos collectes, leur état et leur résultat. Ajoutez une adresse, lancez-la, puis téléchargez les données une fois prêtes.</p>
+<a class="btn" href="#fonctionne">Voir comment ça marche</a>
+</div>
+<figure class="ecran" aria-label="Aperçu du tableau de bord : deux collectes">
+<div class="ecran-t"><i></i><i></i><i></i></div>
+<div class="ligne"><div><b>https://reddit.com/r/entrepreneur</b><span>487 résultats · il y a 2 min</span></div><span class="etat fini">Terminée</span></div>
+<div class="ligne"><div><b>https://discord.com/api</b><span>142 résultats · en cours</span></div><span class="etat">En cours</span></div>
+<figcaption style="padding:12px 16px;font-size:.8rem;color:var(--sourd)">Aperçu d'exemple. Les chiffres sont fictifs.</figcaption>
+</figure>
+</div>
+
+<section id="fonctionne"><div class="l">
+<h2>Trois étapes</h2>
+<ol class="etapes">
+<li><h3>1. Ajoutez une adresse</h3><p>Collez le lien de la page à collecter dans le champ prévu.</p></li>
+<li><h3>2. Suivez l'état</h3><p>Chaque collecte affiche si elle est en cours, terminée ou en erreur.</p></li>
+<li><h3>3. Téléchargez</h3><p>Une fois terminée, récupérez les résultats en un clic.</p></li>
+</ol>
+</div></section>
+
+<section><div class="l">
+<h2>Ce que vous pouvez faire</h2>
+<ol class="etapes">
+<li><h3>Créer une collecte</h3><p>Ajoutez une adresse et choisissez ce que vous voulez récupérer.</p></li>
+<li><h3>Supprimer une collecte</h3><p>Retirez une collecte que vous n'utilisez plus, en un clic.</p></li>
+<li><h3>Garder la trace</h3><p>Chaque collecte garde sa date et son nombre de résultats.</p></li>
+</ol>
+</div></section>
+
+<section class="fin"><div class="l">
+<div><h2 style="margin:0">Essayez le tableau de bord.</h2><p style="margin-top:10px">Ouvrez l'application et ajoutez votre première collecte.</p></div>
+<a class="btn" href="#">Ouvrir le tableau de bord</a>
+</div></section>
+</main>
+
+<footer><div class="l"><span>Obscura Dashboard. Données d'exemple affichées par défaut.</span><span><a href="https://github.com/h4ckf0r0day/obscura">Moteur Obscura (GitHub)</a></span></div></footer>
+
+<script>
+(function(){var b=document.getElementById('tg'),h=document.documentElement,
+S='<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+M='<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+function u(){var c=h.dataset.theme==='clair';b.innerHTML=c?M:S;b.setAttribute('aria-pressed',String(c))}
+b.onclick=function(){var c=h.dataset.theme==='clair';if(c)delete h.dataset.theme;else h.dataset.theme='clair';try{localStorage.setItem('theme',c?'base':'clair')}catch(e){}u()};
+u()})();
+</script>
+</body>
+</html>

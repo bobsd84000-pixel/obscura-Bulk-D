@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Obscura : navigateur headless écrit en Rust, compatible Chrome DevTools Protocol. Open source, licence MIT.">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Obscura, navigateur headless en Rust">
+  <meta property="og:description" content="Navigateur headless en Rust, compatible Chrome DevTools Protocol. Open source, licence MIT.">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a0a0a'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%2300d9ff' font-family='monospace' font-weight='700'%3EO%3C/text%3E%3C/svg%3E">
+  <title>Obscura — Headless Browser in Rust</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --black: #0a0a0a;
+      --cyan: #00d9ff;
+      --orange: #ff6b35;
+      --slate: #2a2a3a;
+      --text: #e0e0e0;
+      --muted: #888;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--black);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* Nav */
+    nav {
+      padding: 20px 64px;
+      border-bottom: 1px solid var(--slate);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--cyan);
+    }
+
+    nav a { color: var(--muted); text-decoration: none; font-size: 12px; }
+
+    /* Hero with Gauges */
+    .hero {
+      padding: 120px 64px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-family: 'Georgia', serif;
+      font-size: 72px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      color: #fff;
+      letter-spacing: -1px;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--muted);
+      margin-bottom: 60px;
+      max-width: 700px;
+    }
+
+    .gauges {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+      margin-bottom: 80px;
+    }
+
+    .gauge {
+      text-align: center;
+    }
+
+    .gauge-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+
+    .gauge-visual {
+      margin-bottom: 20px;
+    }
+
+    .gauge-bar {
+      height: 8px;
+      background: var(--slate);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--orange));
+      animation: expand 2s ease-out forwards;
+      border-radius: 4px;
+    }
+
+    @keyframes expand {
+      from { width: 0%; }
+      to { width: var(--fill-amount); }
+    }
+
+    .gauge-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+
+    .gauge-vs {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .cta {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: 1px solid var(--slate);
+      border-radius: 4px;
+      background: none;
+      color: var(--text);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+    .btn-primary {
+      background: var(--cyan);
+      color: var(--black);
+      border-color: var(--cyan);
+    }
+
+    .btn-primary:hover { background: #00a8cc; }
+
+    /* Comparison Bars */
+    .comparison {
+      padding: 80px 64px;
+      border-top: 1px solid var(--slate);
+      border-bottom: 1px solid var(--slate);
+      background: rgba(0, 217, 255, 0.02);
+    }
+
+    .comparison h2 {
+      font-family: 'Georgia', serif;
+      font-size: 32px;
+      margin-bottom: 60px;
+      color: #fff;
+    }
+
+    .comparison-row {
+      margin-bottom: 40px;
+      max-width: 800px;
+    }
+
+    .comparison-label {
+      font-size: 13px;
+      color: var(--text);
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .comparison-bars {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .bar-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .bar-fill {
+      height: 24px;
+      background: var(--slate);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .bar-inner {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--orange));
+      animation: expand 2s ease-out forwards;
+    }
+
+    .bar-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Features */
+    .features {
+      padding: 80px 64px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .features h2 {
+      font-family: 'Georgia', serif;
+      font-size: 32px;
+      margin-bottom: 48px;
+      color: #fff;
+    }
+
+    .feature-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 40px;
+    }
+
+    .feature-item {
+      border-left: 2px solid var(--cyan);
+      padding-left: 24px;
+    }
+
+    .feature-item h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .feature-item p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* Pricing */
+    .pricing {
+      padding: 80px 64px;
+      border-top: 1px solid var(--slate);
+    }
+
+    .pricing h2 {
+      font-family: 'Georgia', serif;
+      font-size: 32px;
+      margin-bottom: 48px;
+      color: #fff;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .pricing-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .price-card {
+      border: 1px solid var(--slate);
+      border-radius: 4px;
+      padding: 32px;
+      background: rgba(0,0,0,0.4);
+    }
+
+    .price-card.featured {
+      border: 2px solid var(--cyan);
+      background: rgba(0, 217, 255, 0.05);
+    }
+
+    .price-card h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .price-amount {
+      font-family: 'Space Mono', monospace;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 20px;
+    }
+
+    .price-card ul {
+      list-style: none;
+      margin-bottom: 24px;
+    }
+
+    .price-card li {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 0;
+    }
+
+    .price-card .btn {
+      width: 100%;
+      text-align: center;
+    }
+
+    footer {
+      padding: 40px 64px;
+      border-top: 1px solid var(--slate);
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    footer a { color: var(--cyan); text-decoration: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .gauge-fill { animation: none; width: var(--fill-amount); }
+      .bar-inner { animation: none; }
+    }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 42px; }
+      nav, .hero, .comparison, .features, .pricing, footer { padding-left: 20px; padding-right: 20px; }
+      .gauges, .feature-list, .pricing-cards { grid-template-columns: 1fr; }
+      .comparison-bars { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">OBSCURA</div>
+    <a href="https://github.com/h4ckf0r0day/obscura">GitHub</a>
+  </nav>
+
+  <section class="hero">
+    <h1>Headless browser<br>built in Rust</h1>
+    <p class="hero-subtitle">Chrome DevTools Protocol. Open source, licence MIT.</p>
+
+    <div class="cta">
+      <a href="https://github.com/h4ckf0r0day/obscura/releases/latest" class="btn btn-primary">Download</a>
+      <a href="https://github.com/h4ckf0r0day/obscura" class="btn">View on GitHub</a>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2>Built for developers</h2>
+    <div class="feature-list">
+      <div class="feature-item">
+        <h3>⚡ Ultra-light</h3>
+        <p>Léger, sans dépendances. Passe à l'échelle sans surcharge.</p>
+      </div>
+      <div class="feature-item">
+        <h3>🔧 Drop-in</h3>
+        <p>API compatible Chrome DevTools. Changez de bibliothèque en une ligne.</p>
+      </div>
+      <div class="feature-item">
+        <h3>🕵️ Anti-detection</h3>
+        <p>Mode furtif intégré, sans extension à installer.</p>
+      </div>
+      <div class="feature-item">
+        <h3>🔐 Open source</h3>
+        <p>MIT license. Full source code. Run anywhere. No vendor lock-in.</p>
+      </div>
+      <div class="feature-item">
+        <h3>📡 MCP ready</h3>
+        <p>Model Context Protocol integration. Works with Claude and AI platforms.</p>
+      </div>
+      <div class="feature-item">
+        <h3>⚙️ Developer first</h3>
+        <p>One-line CLI. Direct Chrome DevTools. Zero boilerplate required.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing">
+    <h2>Pricing</h2>
+    <div class="pricing-cards">
+      <div class="price-card">
+        <h3>Community</h3>
+        <div class="price-amount">Free</div>
+        <ul>
+          <li>✓ Forever free</li>
+          <li>✓ Full source code</li>
+          <li>✓ Self-hosted</li>
+          <li>✓ GitHub support</li>
+        </ul>
+        <a href="https://github.com/h4ckf0r0day/obscura" class="btn">Get Started</a>
+      </div>
+      <div class="price-card featured">
+        <h3>Pro</h3>
+        <div class="price-amount">99€</div>
+        <ul>
+          <li>✓ Priority support</li>
+          <li>✓ CLI + API</li>
+          <li>✓ MCP integration</li>
+          <li>✓ Accord de niveau de service (sur devis)</li>
+        </ul>
+        <button class="btn" disabled>Bientôt disponible</button>
+      </div>
+      <div class="price-card">
+        <h3>Enterprise</h3>
+        <div class="price-amount">Custom</div>
+        <ul>
+          <li>✓ White-label</li>
+          <li>✓ Private infrastructure</li>
+          <li>✓ Dedicated support</li>
+          <li>✓ Custom SLA</li>
+        </ul>
+        <a href="#" class="btn">Contact sales</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © 2026 Obscura • <a href="https://github.com/h4ckf0r0day/obscura">GitHub</a> • <a href="https://github.com/h4ckf0r0day/obscura#readme">Docs</a> • <a href="https://github.com/h4ckf0r0day/obscura/issues">Issues</a> • <a href="/confidentialite.html">Confidentialité</a> • <a href="/cgu.html">CGU et mentions légales</a>
+  </footer>
+</body>
+</html>
