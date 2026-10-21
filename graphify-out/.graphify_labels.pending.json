@@ -1,0 +1,12 @@
+{
+  "0": "dashboard/src/index.js",
+  "1": "dashboard/package.json",
+  "2": "dependencies",
+  "3": "landing/package.json",
+  "4": "scripts",
+  "5": "Obscura Dashboard",
+  "6": "vercel.json",
+  "7": "dashboard/vercel.json",
+  "8": "DEPLOY_LANDING.sh",
+  "9": "README.md"
+}
